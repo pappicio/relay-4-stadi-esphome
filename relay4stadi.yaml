@@ -1,0 +1,155 @@
+esphome:
+  name: sala
+  friendly_name: sala
+  name_add_mac_suffix: false
+  project:
+    name: esphome.web
+    version: '1.0'
+
+#esp8266
+#esphome:
+#  name: stampa-3d
+#  friendly_name: stampa-3d
+esp8266:
+  board: esp01_1m
+
+
+#esp32:
+#  board: esp32-c3-devkitm-1
+#  framework:
+#    type: arduino
+
+# Enable logging
+logger:
+  level: DEBUG
+  logs:
+    text_sensor: error
+# Enable Home Assistant API
+api:
+
+# Allow Over-The-Air updates
+ota:
+  platform: esphome
+
+# Allow provisioning Wi-Fi via serial
+improv_serial:
+
+wifi:
+  networks:
+    - ssid: peppe2
+    - password: !secret wifi_password2
+    - ssid: peppe6
+    - password: !secret wifi_password6
+   
+  manual_ip:
+    static_ip: 192.168.1.67
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+    dns1: 192.168.1.1
+
+  ap:
+    {}
+
+captive_portal:
+
+dashboard_import:
+  package_import_url: github://esphome/firmware/esphome-web/esp32c3.yaml@v2
+  import_full_config: true
+
+#esp32_improv:
+#  authorizer: none
+
+# To have a "next url" for improv serial
+web_server:
+  version: 3
+ 
+sensor:
+  - platform: wifi_signal
+    name: "Segnale WiFi"
+    update_interval: 10s
+text_sensor:
+  - platform: wifi_info
+    ssid:
+      name: "wifi connesso a:"
+
+switch:
+  - platform: gpio
+    restore_mode: RESTORE_DEFAULT_OFF 
+    name: "luce1"
+    id: luce1
+    inverted: true
+    pin: GPIO12
+  
+  - platform: gpio
+    restore_mode: RESTORE_DEFAULT_OFF 
+    name: "luce2"
+    id: luce2
+    pin: GPIO14
+    inverted: true
+   
+  - platform: template
+    name: "accendi"
+    #internal: true
+    id: accendi
+    optimistic: true
+    lambda: return id(accendi).state;  
+    on_turn_on:
+      - script.execute: esegui
+      - script.wait: esegui
+      - delay: 100ms
+      - switch.turn_off: accendi
+   
+
+binary_sensor:
+  - platform: gpio
+    internal: true
+    pin:
+      number: GPIO13
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    name: pulsante
+    id: pulsante
+    on_click:
+    - min_length: 50ms
+      max_length: 999ms
+      #click breve
+      then:
+        - script.execute: esegui
+        - script.wait: esegui
+
+    - min_length: 1000ms
+      max_length: 5000ms
+      #click lungo
+      #- logger.log: "tasto programma click lungo"
+      then:
+        - lambda: |-
+              id(luce1).turn_off();
+              id(luce2).turn_off();
+        
+script:
+  - id: esegui
+    then:
+      - lambda: |-
+          if (id(luce1).state == 0 and id(luce2).state==0) 
+          {
+          id(luce1).turn_on();
+          id(luce2).turn_off();
+          }
+          else if (id(luce1).state == 1 and id(luce2).state == 0)
+          {
+          id(luce1).turn_off();
+          id(luce2).turn_on();     
+          }
+          else if (id(luce1).state == 0 and id(luce2).state == 1)
+          {
+          id(luce1).turn_on();
+          id(luce2).turn_on();  
+          }
+          else if (id(luce1).state == 1 and id(luce2).state == 1)
+          {
+          id(luce1).turn_off();
+          id(luce2).turn_off();     
+          }
+ 
