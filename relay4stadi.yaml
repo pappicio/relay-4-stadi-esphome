@@ -5,15 +5,19 @@ esphome:
   project:
     name: esphome.web
     version: '1.0'
+preferences:
+  flash_write_interval: 1sec
 
 esp8266:
   board: esp01_1m
+  restore_from_flash: true
 
-
+##########ESP32#######################
 #esp32:
 #  board: esp32-c3-devkitm-1
 #  framework:
 #    type: arduino
+######################################
 
 # Enable logging
 logger:
@@ -48,13 +52,13 @@ wifi:
 
 captive_portal:
 
+##########ESP32#######################
 #dashboard_import:
 #  package_import_url: github://esphome/firmware/esphome-web/esp32c3.yaml@v2
 #  import_full_config: true
-
 #esp32_improv:
 #  authorizer: none
-
+#####################################
 # To have a "next url" for improv serial
 web_server:
   version: 3
@@ -92,7 +96,7 @@ switch:
     on_turn_on:
       - script.execute: esegui
       - script.wait: esegui
-      - delay: 100ms
+      - delay: 200ms
       - switch.turn_off: accendi
    
 
@@ -108,7 +112,7 @@ binary_sensor:
     name: pulsante
     id: pulsante
     on_click:
-    - min_length: 50ms
+    - min_length: 100ms
       max_length: 999ms
       #click breve
       then:
