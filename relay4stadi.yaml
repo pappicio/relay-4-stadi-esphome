@@ -5,19 +5,18 @@ esphome:
   project:
     name: esphome.web
     version: '1.0'
+################################################################
 preferences:
   flash_write_interval: 1sec
-
+################################################################
 esp8266:
   board: esp01_1m
   restore_from_flash: true
 
-##########ESP32#######################
 #esp32:
 #  board: esp32-c3-devkitm-1
 #  framework:
 #    type: arduino
-######################################
 
 # Enable logging
 logger:
@@ -27,9 +26,12 @@ logger:
 # Enable Home Assistant API
 api:
 
+##############################################################
 # Allow Over-The-Air updates
 ota:
-  platform: esphome
+  - platform: esphome
+    password: !secret ota_password
+##############################################################
 
 # Allow provisioning Wi-Fi via serial
 improv_serial:
@@ -52,25 +54,72 @@ wifi:
 
 captive_portal:
 
-##########ESP32#######################
 #dashboard_import:
 #  package_import_url: github://esphome/firmware/esphome-web/esp32c3.yaml@v2
 #  import_full_config: true
+
 #esp32_improv:
 #  authorizer: none
-#####################################
+
 # To have a "next url" for improv serial
+#########################################################################
 web_server:
   version: 3
- 
-sensor:
-  - platform: wifi_signal
-    name: "Segnale WiFi"
-    update_interval: 10s
+#########################################################################
+
+#########################################################################
 text_sensor:
   - platform: wifi_info
     ssid:
       name: "wifi connesso a:"
+      web_server_sorting_weight: 7
+ 
+  - platform: template
+    name: "Uptime:"
+    lambda: |-
+      int seconds = (id(uptimex).state);
+      String days = String(seconds / (24 * 3600));
+      //if (days.length() == 1)
+      //{
+      //days="0" + days;
+      //}
+      seconds = seconds % (24 * 3600); 
+      String hours = String(seconds / 3600);
+      if (hours.length() == 1)
+      {
+      hours="0" + hours;
+      }
+      seconds = seconds % 3600;
+      String minutes = String(seconds /  60);
+      if (minutes.length() == 1)
+      {
+      minutes="0" + minutes;
+      }
+      String second = String(seconds % 60);
+      if (second.length() == 1)
+      {
+      second="0" + second;
+      }
+      return { (days +" g; " + hours +" h " + minutes +" m e "+ second +" s").c_str() };
+      //return { (String(days) +"g " + String(hours) +"h:" + String(minutes) +"m:"+ String(seconds) +"s").c_str() };
+ 
+    icon: mdi:clock-start
+    update_interval: 5s
+#########################################################################
+
+#########################################################################
+sensor:
+  - platform: wifi_signal
+    name: "Segnale WiFi"
+    web_server_sorting_weight: 8
+    update_interval: 10s
+
+  - platform: uptime
+    name: "Uptime"
+    internal: true
+    id: uptimex
+    update_interval: 5s
+#########################################################################
 
 switch:
   - platform: gpio
@@ -95,7 +144,7 @@ switch:
     lambda: return id(accendi).state;  
     on_turn_on:
       - script.execute: esegui
-      - script.wait: esegui
+      #- script.wait: esegui
       - delay: 200ms
       - switch.turn_off: accendi
    
@@ -117,7 +166,7 @@ binary_sensor:
       #click breve
       then:
         - script.execute: esegui
-        - script.wait: esegui
+        #- script.wait: esegui
 
     - min_length: 1000ms
       max_length: 5000ms
